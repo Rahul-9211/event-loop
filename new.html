@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Event Loop Visualization</title>
+    <style>
+      /* CSS styling for the event loop components */
+      .container {
+        display: flex;
+        justify-content: space-between;
+      }
+      .stack-container {
+        width: 200px;
+        height: 200px;
+        border: 1px solid #000;
+        padding: 10px;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        overflow-y: auto;
+      }
+      .box {
+        width: 10%;
+        height: 10%;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="stack-container">
+        <h3>Task Queue</h3>
+        <div id="taskQueue"></div>
+      </div>
+      <div class="stack-container">
+        <h3>Microtask Queue</h3>
+        <div id="microTaskQueue"></div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/8.2.1/acorn.js"></script>
+    <script>
+      // JavaScript logic to analyze and enqueue code into the appropriate queues
+      const taskQueueContainer = document.getElementById("taskQueue");
+      const microTaskQueueContainer = document.getElementById("microTaskQueue");
+
+      // Function to enqueue a task in the task queue
+      function enqueueTask(callback) {
+        addToTaskQueue(); // Add a box to the task queue UI
+        setTimeout(callback, 0); // Enqueue the callback as a task in the task queue
+      }
+
+      // Function to enqueue a microtask in the microtask queue
+      function enqueueMicroTask(callback) {
+        addToMicroTaskQueue(); // Add a box to the microtask queue UI
+        Promise.resolve().then(callback); // Enqueue the callback as a microtask in the microtask queue
+      }
+
+      // Example code
+      const code = `
+        const sum = (a, b) => {
+          console.log('Executing sum function');
+          return a + b;
+        };
+        
+        const promise = new Promise((resolve) => {
+          console.log('Executing promise');
+          resolve();
+        });
+        
+        enqueueTask(() => {
+          const result = sum(2, 4);
+          console.log('Result:', result);
+        });
+        
+        enqueueMicroTask(() => {
+          console.log('Microtask executed');
+        });
+        
+        promise.then(() => {
+          console.log('Promise resolved');
+        });
+      `;
+
+      // Function to parse the code and enqueue tasks
+      function analyzeAndEnqueueCode(code) {
+        const ast = acorn.parse(code, { sourceType: "module" });
+
+        traverseAST(ast, (node) => {
+          console.log("node ->", node);
+          if (isCallbackInvocation(node)) {
+            enqueueTask(() => {
+              executeCallback(node);
+            });
+          } else if (isPromise(node)) {
+            enqueueMicroTask(() => {
+              executePromiseCallback(node);
+            });
+          }
+        });
+
+        processNextTask(); // Start
+      }
+
+      // Function to parse the code and create the AST
+      function parseCode(code) {
+        return acorn.parse(code, { sourceType: "module" });
+      }
+
+      // Function to traverse the AST nodes
+      function traverseAST(node, callback) {
+        callback(node); // Process the current node
+
+        // Traverse child nodes recursively
+        for (const key in node) {
+          if (typeof node[key] === "object" && node[key] !== null) {
+            if (Array.isArray(node[key])) {
+              node[key].forEach((child) => {
+                traverseAST(child, callback);
+              });
+            } else {
+              traverseAST(node[key], callback);
+            }
+          }
+        }
+      }
+
+      // Function to check if a node represents a callback-invoking function invocation
+      function isCallbackInvocation(node) {
+        return (
+          node.type === "CallExpression" &&
+          node.callee.type === "Identifier" &&
+          node.callee.name.endsWith("Callback")
+        );
+      }
+
+      // Function to check if a node represents a promise
+      function isPromise(node) {
+        return node.type === "NewExpression" && node.callee.name === "Promise";
+      }
+
+      // Function to execute a callback
+      function executeCallback(node) {
+        console.log("Executing callback:", node.callee.name);
+      }
+
+      // Function to execute a promise resolution callback
+      function executePromiseCallback(node) {
+        console.log("Executing promise resolution callback:", node.callee.name);
+      }
+
+      // Function to add a box to the task queue UI
+      function addToTaskQueue() {
+        const box = createBox();
+        taskQueueContainer.appendChild(box);
+      }
+
+      // Function to add a box to the microtask queue UI
+      function addToMicroTaskQueue() {
+        const box = createBox();
+        microTaskQueueContainer.appendChild(box);
+      }
+
+      // Helper function to create a box element
+      function createBox() {
+        const box = document.createElement("div");
+        box.classList.add("box");
+        return box;
+      }
+
+      // Function to process the next task in the task queue
+      function processNextTask() {
+        //   console.log("Processing task...");
+        const task = taskQueueContainer.firstChild;
+        if (task) {
+          task.remove();
+          console.log("Processing task...");
+        }
+      }
+
+      // Function to start the event loop
+      function startEventLoop() {
+        processNextTask();
+      }
+
+      // Example usage: Analyze and enqueue the code
+      const ast = parseCode(code);
+      console.log(ast)
+      traverseAST(ast, (node) => {
+        if (isCallbackInvocation(node)) {
+          enqueueTask(() => {
+            executeCallback(node);
+          });
+        } else if (isPromise(node)) {
+          enqueueMicroTask(() => {
+            executePromiseCallback(node);
+          });
+        }
+      });
+
+      startEventLoop();
+    </script>
+  </body>
+</html>

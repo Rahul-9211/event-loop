@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Event Loop Visualization</title>
+    <style>
+      /* CSS styling for the event loop components */
+      .container {
+        display: flex;
+        justify-content: space-between;
+      }
+      .stack-container {
+        width: 200px;
+        height: 200px;
+        border: 1px solid #000;
+        padding: 10px;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        overflow-y: auto;
+      }
+      #callStack,
+      #taskQueue,
+      #microTaskQueue {
+        width: 90%;
+        height: 90%;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: start;
+        flex-wrap: wrap;
+      }
+      .box {
+        width: 10%;
+        height: 10%;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="stack-container">
+        <h3>Call Stack</h3>
+        <div id="callStack"></div>
+        <button class="addCallStack">add callStack</button>
+      </div>
+
+      <div class="stack-container">
+        <h3>Task Queue</h3>
+        <div id="taskQueue"></div>
+        <button class="addTaskQueue">add taskQueue</button>
+      </div>
+      <div class="stack-container">
+        <h3>Microtask Queue</h3>
+        <div id="microTaskQueue"></div>
+        <button class="addMicroTaskQueue">add microtaskQueue</button>
+      </div>
+    </div>
+
+    <script>
+      // JavaScript logic to add boxes to the containers
+      const callStackContainer = document.getElementById("callStack");
+      const taskQueueContainer = document.getElementById("taskQueue");
+      const microTaskQueueContainer = document.getElementById("microTaskQueue");
+
+      // use buttons to add value in stack
+      const addCallStack = document.querySelector(".addCallStack");
+      const addTaskQueue = document.querySelector(".addTaskQueue");
+      const addMicroTaskQueue = document.querySelector(".addMicroTaskQueue");
+
+      // array of stack
+      let callStackArr = [`<div class="box"></div>`, `<div class="box"></div>`];
+      let TaskQueueArr = [`<div class="box"></div>`, `<div class="box"></div>`];
+      let MicroTaskQueueArr = [
+        `<div class="box"></div>`,
+        `<div class="box"></div>`,
+      ];
+
+      // Function to add a box to the call stack
+      function showCallStack() {
+        const box = createBox();
+        for (let i = 0; i < callStackArr.length; i++) {
+          callStackContainer.innerHTML += callStackArr[i];
+        }
+      }
+
+      // Function to add a box to the task queue
+      function showTaskQueue() {
+        const box = createBox();
+        for (let i = 0; i < TaskQueueArr.length; i++) {
+          taskQueueContainer.innerHTML += TaskQueueArr[i];
+        }
+      }
+
+      function showMicroTaskQueue() {
+        const box = createBox();
+        for (let i = 0; i < MicroTaskQueueArr.length; i++) {
+          microTaskQueueContainer.innerHTML += MicroTaskQueueArr[i];
+        }
+      }
+
+      // Helper function to create a box element
+      function createBox() {
+        const box = document.createElement("div");
+        box.classList.add("box");
+        return box;
+      }
+
+      // Event listener for the add button
+      addCallStack.addEventListener("click", () => {
+        callStackArr.push(`<div class="box"></div>`);
+        callStackContainer.innerHTML += `<div class="box"></div>`;
+      });
+
+      addTaskQueue.addEventListener("click", () => {
+        TaskQueueArr.push(`<div class="box"></div>`);
+        taskQueueContainer.innerHTML += `<div class="box"></div>`;
+      });
+
+      addMicroTaskQueue.addEventListener("click", () => {
+        MicroTaskQueueArr.push(`<div class="box"></div>`);
+        microTaskQueueContainer.innerHTML += `<div class="box"></div>`;
+      });
+
+      // Example usage: Trigger the addition of boxes
+      showCallStack();
+      showTaskQueue();
+      showMicroTaskQueue();
+
+      // logic to identify in which data data have to send----------->
+
+      // Simulating function calls
+      function myFunction() {
+        addToCallStack(); // Add a box to the call stack UI
+        // Function code...
+      }
+
+      // Simulating setTimeout
+      setTimeout(function () {
+        addToTaskQueue(); // Add a box to the task queue UI
+        // Code to execute after a delay...
+      }, 1000);
+
+      // Simulating Promises
+      const myPromise = new Promise(function (resolve, reject) {
+        // Async code...
+        // if (/* Operation successful */) {
+        //   addToMicroTaskQueue(); // Add a box to the microtask queue UI
+        //   resolve(result);
+        // } else {
+        //   reject(error);
+        // }
+      });
+
+      // Simulating event listeners
+      document
+        .getElementById("myButton")
+        .addEventListener("click", function () {
+          addToTaskQueue(); // Add a box to the task queue UI
+          // Code to execute on button click...
+        });
+    </script>
+  </body>
+</html>
